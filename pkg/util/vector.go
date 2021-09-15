@@ -1,9 +1,14 @@
 package util
 
 import (
+	"fmt"
 	"math"
 	"sort"
+	"strings"
+	"time"
 )
+
+const DATE_TIME_FMT = "2006-01-02 15:04:05"
 
 type Vector struct {
 	Timestamp float64 `json:"timestamp"`
@@ -151,4 +156,19 @@ func NormalizeVectorByVector(xvs []*Vector, yvs []*Vector) []*Vector {
 	}
 
 	return ApplyVectorOp(xvs, yvs, normalizeOp)
+}
+
+func GetStringVerctor(v Vector) string {
+	return fmt.Sprintf("{%s,%f}", time.Unix(int64(v.Timestamp), 0).Format(DATE_TIME_FMT), v.Value)
+}
+
+func GetStringVerctors(vv []*Vector) string {
+	var strs []string
+	for _, v := range vv {
+		if v != nil {
+			strs = append(strs, GetStringVerctor(*v))
+		}
+	}
+
+	return strings.Join(strs, ",")
 }
