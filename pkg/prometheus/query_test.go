@@ -1,15 +1,18 @@
 package prometheus
 
 import (
+	"flag"
 	"fmt"
 	"github.com/open-resource-management/metricsclient/pkg/util"
 	"testing"
 	"time"
 )
 
+var addr = flag.String("addr", "http://127.0.0.1:8080", "The addr of prometheus, default is \"http://127.0.0.1:8080\"")
+
 func TestNewNamedContext(t *testing.T) {
 
-	var address = "http://159.75.100.72:12345"
+	var address = *addr
 	var timeout = 10 * time.Second
 	var keepAlive = 10 * time.Second
 	var queryConcurrency = 10
@@ -25,7 +28,7 @@ func TestNewNamedContext(t *testing.T) {
 }
 
 func TestContext_Query(t *testing.T) {
-	var address = "http://159.75.100.72:12345"
+	var address = *addr
 	var timeout = 10 * time.Second
 	var keepAlive = 10 * time.Second
 	var queryConcurrency = 10
@@ -66,7 +69,7 @@ func TestContext_Query(t *testing.T) {
 }
 
 func TestContext_QueryRange(t *testing.T) {
-	var address = "http://159.75.100.72:12345"
+	var address = *addr
 	var timeout = 10 * time.Second
 	var keepAlive = 10 * time.Second
 	var queryConcurrency = 10
@@ -109,8 +112,8 @@ func TestContext_QueryRange(t *testing.T) {
 	t.Logf("TestContext_QueryRange succeed")
 }
 
-func TestContext_QueryRangeMemory(t *testing.T) {
-	var address = "http://159.75.100.72:12345"
+func TestContext_QueryRangeMemoryTotal(t *testing.T) {
+	var address = *addr
 	var timeout = 10 * time.Second
 	var keepAlive = 10 * time.Second
 	var queryConcurrency = 10
@@ -125,24 +128,62 @@ func TestContext_QueryRangeMemory(t *testing.T) {
 
 	ctx := NewNamedContext(client, ClusterContextName)
 
-	queryNodeMemoryTotal := fmt.Sprintf(`sum(node_memory_MemTotal_bytes) by (instance)`)
+	queryNodeMemoryTotal := fmt.Sprintf(`sum(node_memory_MemTotal_bytes/1024.0/1024.0) by (instance)`)
 
-	t.Logf("TestContext_QueryRangeMemory queryNodeMemoryTotal %s", queryNodeMemoryTotal)
+	t.Logf("TestContext_QueryRangeMemoryTotal queryNodeMemoryTotal %s", queryNodeMemoryTotal)
 
 	resultsChan := ctx.QueryRange(queryNodeMemoryTotal, start, end, time.Minute)
 
 	results, err := resultsChan.Await()
 	if err != nil {
-		t.Fatalf("TestContext_QueryRangeMemory Query failed, err %s", err.Error())
+		t.Fatalf("TestContext_QueryRangeMemoryTotal Query failed, err %s", err.Error())
 		return
 	}
 
-	t.Logf("TestContext_QueryRangeMemory request %v", results)
+	t.Logf("TestContext_QueryRangeMemoryTotal request %v", results)
 
 	for key := range results {
 		t.Logf("Metrics: %s ", results[key].Metric)
 		t.Logf("Values: %s", util.GetStringVerctors(results[key].Values))
 	}
 
-	t.Logf("TestContext_QueryRangeMemory succeed")
+	t.Logf("TestContext_QueryRangeMemoryTotal succeed")
+}
+
+func TestContext_QueryRangeMemoryUsage(t *testing.T) {
+	var address = *addr
+	var timeout = 10 * time.Second
+	var keepAlive = 10 * time.Second
+	var queryConcurrency = 10
+
+	var end = time.Now()
+	var start = end.Add(-time.Minute * 10)
+
+	client, err := NewPrometheusClient(address, timeout, keepAlive, queryConcurrency, false, false, &ClientAuth{})
+	if err != nil {
+		t.Fatalf("NewPrometheusClient failed %s", err.Error())
+	}
+
+	ctx := NewNamedContext(client, ClusterContextName)
+
+	queryNodeMemoryTotal := fmt.Sprintf(`(node_memory_MemTotal_bytes-node_memory_MemAvailable_bytes)/1024.0/1024.0`)
+
+	t.Logf("TestContext_QueryRangeMemoryUsage queryNodeMemoryTotal %s", queryNodeMemoryTotal)
+
+	resultsChan := ctx.QueryRange(queryNodeMemoryTotal, start, end, time.Minute)
+
+	results, err := resultsChan.Await()
+	if err != nil {
+		t.Fatalf("TestContext_QueryRangeMemoryUsage Query failed, err %s", err.Error())
+		return
+	}
+
+	t.Logf("TestContext_QueryRangeMemoryUsage request %v", results)
+
+	for key := range results {
+		t.Logf("Metrics: %s ", results[key].Metric)
+		t.Logf("Values: %s", util.GetStringVerctors(results[key].Values))
+	}
+
+	t.Logf("TestContext_QueryRangeMemoryUsage succeed")
 }
