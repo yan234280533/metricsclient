@@ -1,4 +1,4 @@
-package prometheus
+package prom
 
 const (
 	// AllocationContextName is the name we assign the allocation query context [metadata]

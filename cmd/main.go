@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/open-resource-management/metricsclient/pkg/prometheus"
+	"github.com/open-resource-management/metricsclient/pkg/prom"
 )
 
 func main() {
@@ -13,7 +13,7 @@ func main() {
 	var keepAlive = 10 * time.Second
 	var queryConcurrency = 10
 
-	client, _ := prometheus.NewPrometheusClient(address, timeout, keepAlive, queryConcurrency, false, false, &prometheus.ClientAuth{})
+	client, _ := prom.NewPrometheusClient(address, timeout, keepAlive, queryConcurrency, false, false, &prom.ClientAuth{})
 
 	fmt.Sprintf("client: %+v", client)
 	return

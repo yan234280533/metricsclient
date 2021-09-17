@@ -1,4 +1,4 @@
-package prometheus
+package prom
 
 // warning represents an unexpected result that occurs but doesn't halt processing
 type warning interface {
